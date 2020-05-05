@@ -8,6 +8,8 @@ from .sample.ctdet import CTDetDataset
 from .sample.multi_pose import MultiPoseDataset
 
 from .dataset.coco import COCO
+from .dataset.egg import Egg
+from .dataset.cluster import Cluster
 from .dataset.pascal import PascalVOC
 from .dataset.kitti import KITTI
 from .dataset.coco_hp import COCOHP
@@ -17,7 +19,9 @@ dataset_factory = {
   'coco': COCO,
   'pascal': PascalVOC,
   'kitti': KITTI,
-  'coco_hp': COCOHP
+  'coco_hp': COCOHP,
+  'egg': Egg,
+  'cluster': Cluster
 }
 
 _sample_factory = {
@@ -27,9 +31,9 @@ _sample_factory = {
   'multi_pose': MultiPoseDataset
 }
 
+class Dataset(dataset_factory['egg'], _sample_factory['ctdet']):
+  pass
 
 def get_dataset(dataset, task):
-  class Dataset(dataset_factory[dataset], _sample_factory[task]):
-    pass
   return Dataset
   

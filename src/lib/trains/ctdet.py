@@ -94,7 +94,7 @@ class CtdetTrainer(BaseTrainer):
     dets_gt[:, :, :4] *= opt.down_ratio
     for i in range(1):
       debugger = Debugger(
-        dataset=opt.dataset, ipynb=(opt.debug==3), theme=opt.debugger_theme)
+        dataset=opt.dataset, ipynb=False, theme=opt.debugger_theme)
       img = batch['input'][i].detach().cpu().numpy().transpose(1, 2, 0)
       img = np.clip(((
         img * opt.std + opt.mean) * 255.), 0, 255).astype(np.uint8)
@@ -117,7 +117,8 @@ class CtdetTrainer(BaseTrainer):
       if opt.debug == 4:
         debugger.save_all_imgs(opt.debug_dir, prefix='{}'.format(iter_id))
       else:
-        debugger.show_all_imgs(pause=True)
+        if iter_id % 10 == 0:
+          debugger.show_all_imgs(pause=False)
 
   def save_result(self, output, batch, results):
     reg = output['reg'] if self.opt.reg_offset else None

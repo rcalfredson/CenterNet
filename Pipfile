@@ -1,0 +1,24 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+pylint = "*"
+
+[packages]
+pycocotools = {git = "https://github.com/rcalfredson/cocoapi.git",subdirectory = "PythonAPI"}
+cython = "*"
+opencv-python = "*"
+pillow = "==6.2.1"
+torch = {file = "https://download.pytorch.org/whl/cu100/torch-1.0.0-cp36-cp36m-win_amd64.whl"}
+torchvision = "==0.2.1"
+numba = "*"
+progress = "*"
+matplotlib = "*"
+scipy = "*"
+easydict = "*"
+scikit-learn = "*"
+
+[requires]
+python_version = "3.6"

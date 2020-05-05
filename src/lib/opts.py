@@ -5,6 +5,7 @@ from __future__ import print_function
 import argparse
 import os
 import sys
+from datasets.dataset_factory import get_dataset
 
 class opts(object):
   def __init__(self):
@@ -126,7 +127,7 @@ class opts(object):
     self.parser.add_argument('--scale', type=float, default=0.4,
                              help='when not using random crop'
                                   'apply scale augmentation.')
-    self.parser.add_argument('--rotate', type=float, default=0,
+    self.parser.add_argument('--rotate', action='store_true', default=False,
                              help='when not using random crop'
                                   'apply rotation augmentation.')
     self.parser.add_argument('--flip', type = float, default=0.5,
@@ -281,7 +282,7 @@ class opts(object):
       opt.load_model = os.path.join(model_path, 'model_last.pth')
     return opt
 
-  def update_dataset_info_and_set_heads(self, opt, dataset):
+  def update_dataset_info_and_set_heads(self, opt, dataset, name=''):
     input_h, input_w = dataset.default_resolution
     opt.mean, opt.std = dataset.mean, dataset.std
     opt.num_classes = dataset.num_classes
@@ -357,6 +358,7 @@ class opts(object):
           self.__setattr__(k, v)
     opt = self.parse(args)
     dataset = Struct(default_dataset_info[opt.task])
-    opt.dataset = dataset.dataset
+    if not opt.dataset: # assume default
+      opt.dataset = dataset.dataset
     opt = self.update_dataset_info_and_set_heads(opt, dataset)
     return opt

@@ -32,6 +32,7 @@ class BaseDetector(object):
     self.num_classes = opt.num_classes
     self.scales = opt.test_scales
     self.opt = opt
+    print('confirming value of opt dataset', opt.dataset)
     self.pause = True
 
   def pre_process(self, image, scale, meta=None):

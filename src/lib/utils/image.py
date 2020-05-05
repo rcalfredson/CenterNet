@@ -10,8 +10,10 @@ from __future__ import division
 from __future__ import print_function
 
 import numpy as np
+from sklearn.cluster import KMeans
 import cv2
 import random
+from .tuples import tupleMul
 
 def flip(img):
   return img[:, :, ::-1].copy()  
@@ -228,3 +230,15 @@ def color_aug(data_rng, image, eig_val, eig_vec):
     for f in functions:
         f(data_rng, image, gs, gs_mean, 0.4)
     lighting_(data_rng, image, 0.1, eig_val, eig_vec)
+
+# returns image rotated in degrees, counterclockwise, by a randomly-generated
+# angle in the range [-90, 90]
+def rotate(img, angle, background=None):
+  cntr = tupleMul(img.shape[:2], .5)
+  mat = cv2.getRotationMatrix2D(cntr, angle, 1.)
+  return cv2.warpAffine(img, mat, img.shape[:2], flags=cv2.INTER_LINEAR, borderValue=background)
+
+def background_color(img):
+  reshape = cv2.cvtColor(img, cv2.COLOR_BGR2RGB).reshape((img.shape[0] * img.shape[1], 3))
+  cluster = KMeans(n_clusters=1).fit(reshape)
+  return tuple([int(v) for v in cv2.cvtColor(np.array([[cluster.cluster_centers_[0]]]).astype(np.float32), cv2.COLOR_RGB2BGR)[0][0]])

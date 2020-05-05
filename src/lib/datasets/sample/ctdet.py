@@ -12,6 +12,7 @@ from utils.image import flip, color_aug
 from utils.image import get_affine_transform, affine_transform
 from utils.image import gaussian_radius, draw_umich_gaussian, draw_msra_gaussian
 from utils.image import draw_dense_reg
+from utils.image import rotate, background_color
 import math
 
 class CTDetDataset(data.Dataset):
@@ -34,7 +35,11 @@ class CTDetDataset(data.Dataset):
     anns = self.coco.loadAnns(ids=ann_ids)
     num_objs = min(len(anns), self.max_objs)
 
+    print('loading this image:', img_path)
+
     img = cv2.imread(img_path)
+    bkgnd = background_color(img)
+    rotAngle = np.random.uniform(-90, 90) if self.opt.rotate else 0
 
     height, width = img.shape[0], img.shape[1]
     c = np.array([img.shape[1] / 2., img.shape[0] / 2.], dtype=np.float32)
@@ -66,12 +71,12 @@ class CTDetDataset(data.Dataset):
         img = img[:, ::-1, :]
         c[0] =  width - c[0] - 1
         
-
     trans_input = get_affine_transform(
-      c, s, 0, [input_w, input_h])
+      c, s, rotAngle, [input_w, input_h])
     inp = cv2.warpAffine(img, trans_input, 
                          (input_w, input_h),
-                         flags=cv2.INTER_LINEAR)
+                         flags=cv2.INTER_LINEAR,
+                         borderValue=bkgnd)
     inp = (inp.astype(np.float32) / 255.)
     if self.split == 'train' and not self.opt.no_color_aug:
       color_aug(self._data_rng, inp, self._eig_val, self._eig_vec)
@@ -81,7 +86,7 @@ class CTDetDataset(data.Dataset):
     output_h = input_h // self.opt.down_ratio
     output_w = input_w // self.opt.down_ratio
     num_classes = self.num_classes
-    trans_output = get_affine_transform(c, s, 0, [output_w, output_h])
+    trans_output = get_affine_transform(c, s, rotAngle, [output_w, output_h])
 
     hm = np.zeros((num_classes, output_h, output_w), dtype=np.float32)
     wh = np.zeros((self.max_objs, 2), dtype=np.float32)
@@ -100,10 +105,18 @@ class CTDetDataset(data.Dataset):
       ann = anns[k]
       bbox = self._coco_box_to_bbox(ann['bbox'])
       cls_id = int(self.cat_ids[ann['category_id']])
+      if self.opt.rotate:
+        pass
       if flipped:
         bbox[[0, 2]] = width - bbox[[2, 0]] - 1
-      bbox[:2] = affine_transform(bbox[:2], trans_output)
-      bbox[2:] = affine_transform(bbox[2:], trans_output)
+      ulC = affine_transform(bbox[:2], trans_output)
+      urC = affine_transform([bbox[2], bbox[1]], trans_output)
+      llC = affine_transform([bbox[0], bbox[3]], trans_output)
+      lrC = affine_transform([bbox[2], bbox[3]], trans_output)
+      bbox[0] = np.min([ulC[0], urC[0], llC[0], lrC[0]])
+      bbox[1] = np.min([ulC[1], urC[1], llC[1], lrC[1]])
+      bbox[2] = np.max([ulC[0], urC[0], llC[0], lrC[0]])
+      bbox[3] = np.max([ulC[1], urC[1], llC[1], lrC[1]])
       bbox[[0, 2]] = np.clip(bbox[[0, 2]], 0, output_w - 1)
       bbox[[1, 3]] = np.clip(bbox[[1, 3]], 0, output_h - 1)
       h, w = bbox[3] - bbox[1], bbox[2] - bbox[0]

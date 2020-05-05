@@ -4,7 +4,7 @@ from __future__ import print_function
 
 import _init_paths
 
-import os
+import importlib, os
 
 import torch
 import torch.utils.data
@@ -12,6 +12,10 @@ from opts import opts
 from models.model import create_model, load_model, save_model
 from models.data_parallel import DataParallel
 from logger import Logger
+print('datasets path?', os.path.join(os.getcwd(), 'src/lib/datasets'))
+spec = importlib.util.spec_from_file_location("datasets", os.path.join(os.getcwd(), 'src\lib\datasets\__init__.py'))
+datasets = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(datasets)
 from datasets.dataset_factory import get_dataset
 from trains.train_factory import train_factory
 
